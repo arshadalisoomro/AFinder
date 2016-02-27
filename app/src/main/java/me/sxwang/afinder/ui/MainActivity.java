@@ -1,15 +1,12 @@
 package me.sxwang.afinder.ui;
 
 import android.annotation.TargetApi;
-import android.app.ActivityOptions;
-import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.transition.Explode;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -66,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void enableTransition() {
         getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
-        getWindow().setExitTransition(new Explode());
+//        getWindow().setExitTransition(new Explode());
     }
 
     private void initFinder() {
@@ -105,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 cd(path);
             }
         });
-        mPathView.setBackgroundColor(getResources().getColor(R.color.grey50));
+        mPathView.setBackgroundColor(getResources().getColor(R.color.grey50, getTheme()));
         AbsListView.LayoutParams lp = new AbsListView.LayoutParams(AbsListView.LayoutParams.MATCH_PARENT,
                 AbsListView.LayoutParams.WRAP_CONTENT);
         mPathView.setLayoutParams(lp);
@@ -146,12 +143,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         int id = item.getItemId();
         switch (id) {
             case R.id.action_search:
-                Intent intent = new Intent(getBaseContext(), SearchActivity.class);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(this).toBundle());
-                } else {
-                    startActivity(intent);
-                }
+                SearchActivity.start(this, mFinder.getCurrentPath());
                 return true;
             case R.id.action_paste:
                 return true;

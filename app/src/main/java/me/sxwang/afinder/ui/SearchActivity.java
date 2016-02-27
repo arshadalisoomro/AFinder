@@ -1,5 +1,9 @@
 package me.sxwang.afinder.ui;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.ActivityOptions;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
@@ -14,18 +18,33 @@ import me.sxwang.afinder.R;
 
 public class SearchActivity extends AppCompatActivity {
 
+    public static final String EXTRA_PATH = SearchActivity.class.getName() + ".EXTRA_PATH";
+
+    public static void start(Activity activity, String path) {
+        Intent intent = new Intent(activity, SearchActivity.class);
+        intent.putExtra(EXTRA_PATH, path);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            activity.startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(activity).toBundle());
+        } else {
+            activity.startActivity(intent);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
-            getWindow().setEnterTransition(new Explode());
-        }
+        enableTransition();
         setContentView(R.layout.activity_search);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void enableTransition() {
+        getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
+        getWindow().setEnterTransition(new Explode());
     }
 
     @Override

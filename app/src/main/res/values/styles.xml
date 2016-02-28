@@ -29,7 +29,7 @@
 
     <style name="AppTheme.Widget.Button.Borderless.Colored"/>
 
-    <style name="AppTheme.Widget.Button.Borderless.Colored.Small" parent="Widget.AppCompat.Button.Borderless.Colored">
+    <style name="AppTheme.Widget.Button.Borderless.Colored.Small" parent="Base.Widget.AppCompat.Button.Borderless.Colored">
         <item name="android:minWidth">36dp</item>
     </style>
 

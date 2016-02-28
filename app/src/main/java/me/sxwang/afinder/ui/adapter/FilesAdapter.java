@@ -33,6 +33,11 @@ public class FilesAdapter extends ArrayAdapter<FileWrapper> {
     }
 
     @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         return createView(LayoutInflater.from(getContext()), position, convertView, parent);
     }

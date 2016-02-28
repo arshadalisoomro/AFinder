@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 cd(path);
             }
         });
-        mPathView.setBackgroundColor(getResources().getColor(R.color.grey50, getTheme()));
+        mPathView.setBackgroundColor(getResources().getColor(R.color.grey50));
         AbsListView.LayoutParams lp = new AbsListView.LayoutParams(AbsListView.LayoutParams.MATCH_PARENT,
                 AbsListView.LayoutParams.WRAP_CONTENT);
         mPathView.setLayoutParams(lp);
@@ -221,6 +221,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 return true;
             case R.id.action_delete:
                 Log.d("delete", "position: " + mListView.getCheckedItemPositions());
+                
                 return true;
         }
         return false;

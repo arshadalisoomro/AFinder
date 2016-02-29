@@ -71,6 +71,15 @@ public class Finder extends AbsFinder {
         notifyFileListUpdated(mFileList);
     }
 
+    public boolean createFile(String name, boolean isDirectory) throws IOException {
+        File file = new File(mCurrentPath.getFile(), name);
+        boolean success = isDirectory ? file.mkdir() : file.createNewFile();
+        if (success) {
+            updateFileList();
+        }
+        return success;
+    }
+
     public static class DefaultFileComparator implements Comparator<FileWrapper> {
         @Override
         public int compare(FileWrapper lhs, FileWrapper rhs) {

@@ -12,8 +12,8 @@ import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.OvershootInterpolator;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListAdapter;
@@ -25,6 +25,7 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import me.sxwang.afinder.R;
 import me.sxwang.afinder.model.AbsFinder;
 import me.sxwang.afinder.model.FileWrapper;
@@ -40,13 +41,19 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     ListView mListView;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
-    @Bind(R.id.fabPopupContainer)
-    ViewGroup mFabPopupContainer;
+    @Bind(R.id.fileFab)
+    FloatingActionButton mFileFab;
+    @Bind(R.id.folderFab)
+    FloatingActionButton mFolderFab;
 
     SegmentedPathView mPathView;
 
     Finder mFinder;
     ListAdapter mFilesAdapter;
+
+    private int typeToCreate = CREATE_FILE;
+    public static final int CREATE_FILE = 0;
+    public static final int CREATE_FOLDER = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,13 +95,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void initView() {
-        mFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                boolean isFabPopupVisible = mFabPopupContainer.getVisibility() == View.VISIBLE;
-            }
-        });
-
         mPathView = new SegmentedPathView(this);
         mPathView.setOnPathSegmentClickListener(new SegmentedPathView.OnPathSegmentClickListener() {
             @Override
@@ -130,6 +130,65 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         mPathView.setPath(mFinder.getCurrentPath());
         mFilesAdapter = new FilesAdapter(this, mFinder.getFileList());
         mListView.setAdapter(mFilesAdapter);
+    }
+
+    @OnClick(R.id.fab)
+    public void onFabClick(View view) {
+        toggleSubFab();
+
+    }
+
+    private void toggleSubFab() {
+        if (mFileFab.getVisibility() != View.VISIBLE) {
+            mFileFab.show();
+            mFolderFab.show();
+            mFab.animate()
+                    .rotation(45)
+                    .setDuration(200)
+                    .setInterpolator(new OvershootInterpolator())
+                    .start();
+        } else {
+            mFolderFab.hide();
+            mFileFab.hide();
+            mFab.animate()
+                    .rotation(0)
+                    .setDuration(200)
+                    .setInterpolator(new OvershootInterpolator())
+                    .start();
+        }
+    }
+
+    @OnClick({R.id.fileFab, R.id.folderFab})
+    public void onSubFabClick(View view) {
+        toggleSubFab();
+        CharSequence title = "Create";
+        switch (view.getId()) {
+            case R.id.fileFab:
+                title = "Create a file";
+                typeToCreate = CREATE_FILE;
+                break;
+            case R.id.folderFab:
+                title = "Create a folder";
+                typeToCreate = CREATE_FOLDER;
+        }
+        EditTextDialogFragment dialogFragment = EditTextDialogFragment.newInstance(title, "Name");
+        dialogFragment.show(getSupportFragmentManager(), null);
+        dialogFragment.setOnFinishListener(new EditTextDialogFragment.OnFinishListener() {
+            @Override
+            public void onFinish(CharSequence text) {
+                try {
+                    String info = "";
+                    if (mFinder.createFile(text.toString(), typeToCreate == CREATE_FOLDER)) {
+                        info = "Success";
+                    } else {
+                        info = "Failed";
+                    }
+                    Toast.makeText(MainActivity.this, info, Toast.LENGTH_SHORT).show();
+                } catch (IOException e) {
+                    Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     @Override
@@ -199,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             case 1:
                 menu.findItem(R.id.action_copy).setVisible(true);
                 menu.findItem(R.id.action_rename).setVisible(true);
-                menu.findItem(R.id.action_delete).setVisible(false);
+                menu.findItem(R.id.action_delete).setVisible(true);
                 break;
             default:
                 menu.findItem(R.id.action_copy).setVisible(false);
@@ -221,7 +280,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 return true;
             case R.id.action_delete:
                 Log.d("delete", "position: " + mListView.getCheckedItemPositions());
-                
                 return true;
         }
         return false;

@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     SegmentedPathView mPathView;
 
     Finder mFinder;
-    ListAdapter mFilesAdapter;
 
     private int typeToCreate = CREATE_FILE;
     public static final int CREATE_FILE = 0;
@@ -104,14 +103,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 cd(path);
             }
         });
+        //noinspection deprecation
         mPathView.setBackgroundColor(getResources().getColor(R.color.grey50));
         AbsListView.LayoutParams lp = new AbsListView.LayoutParams(AbsListView.LayoutParams.MATCH_PARENT,
                 AbsListView.LayoutParams.WRAP_CONTENT);
         mPathView.setLayoutParams(lp);
         mListView.addHeaderView(mPathView);
 
-        mFilesAdapter = new FilesAdapter(this);
-        mListView.setAdapter(mFilesAdapter);
+        ListAdapter filesAdapter = new FilesAdapter(this);
+        mListView.setAdapter(filesAdapter);
         mListView.setOnItemClickListener(this);
         mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
         mListView.setMultiChoiceModeListener(this);
@@ -130,8 +130,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void refreshView() {
         mPathView.setPath(mFinder.getCurrentPath());
-        mFilesAdapter = new FilesAdapter(this, mFinder.getFileList());
-        mListView.setAdapter(mFilesAdapter);
+        ListAdapter filesAdapter = new FilesAdapter(this, mFinder.getFileList());
+        mListView.setAdapter(filesAdapter);
     }
 
     @OnClick(R.id.fab)
@@ -179,7 +179,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             @Override
             public void onFinish(CharSequence text) {
                 try {
-                    String info = "";
+                    String info;
                     if (mFinder.createFile(text.toString(), typeToCreate == CREATE_FOLDER)) {
                         info = "Success";
                     } else {
@@ -226,8 +226,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        int realPosition = position - ((ListView) parent).getHeaderViewsCount();
-        FileWrapper wrapper = (FileWrapper) mFilesAdapter.getItem(realPosition);
+        FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(position);
         if (wrapper.getFile().isDirectory()) {
             cd(wrapper.getFile().getAbsolutePath());
         }
@@ -286,8 +285,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 List<FileWrapper> files = new ArrayList<>();
                 for (int i = 0, size = positions.size(); i < size; i++) {
                     if (positions.valueAt(i)) {
-                        int p = positions.keyAt(i);
-                        FileWrapper wrapper = (FileWrapper) mFilesAdapter.getItem(p);
+                        int p = positions.keyAt(i) - mListView.getHeaderViewsCount();
+                        FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(p);
                         files.add(wrapper);
                     }
                 }

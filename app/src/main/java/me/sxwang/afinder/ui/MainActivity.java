@@ -285,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 List<FileWrapper> files = new ArrayList<>();
                 for (int i = 0, size = positions.size(); i < size; i++) {
                     if (positions.valueAt(i)) {
-                        int p = positions.keyAt(i) - mListView.getHeaderViewsCount();
+                        int p = positions.keyAt(i);
                         FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(p);
                         files.add(wrapper);
                     }

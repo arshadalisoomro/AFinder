@@ -8,6 +8,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +22,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.Bind;
@@ -279,7 +281,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 Log.d("rename", "position: " + mListView.getCheckedItemPositions().keyAt(0));
                 return true;
             case R.id.action_delete:
-                Log.d("delete", "position: " + mListView.getCheckedItemPositions());
+                SparseBooleanArray positions = mListView.getCheckedItemPositions();
+                Log.d("delete", "positions: " + positions);
+                List<FileWrapper> files = new ArrayList<>();
+                for (int i = 0, size = positions.size(); i < size; i++) {
+                    if (positions.valueAt(i)) {
+                        int p = positions.keyAt(i);
+                        FileWrapper wrapper = (FileWrapper) mFilesAdapter.getItem(p);
+                        files.add(wrapper);
+                    }
+                }
+                mFinder.deleteFiles(files);
                 return true;
         }
         return false;

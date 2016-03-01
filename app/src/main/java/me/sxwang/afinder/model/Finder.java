@@ -80,6 +80,14 @@ public class Finder extends AbsFinder {
         return success;
     }
 
+    public boolean deleteFiles(List<FileWrapper> files) {
+        boolean result = true;
+        for (FileWrapper wrapper : files) {
+            result = result && wrapper.getFile().delete();
+        }
+        return result;
+    }
+
     public static class DefaultFileComparator implements Comparator<FileWrapper> {
         @Override
         public int compare(FileWrapper lhs, FileWrapper rhs) {

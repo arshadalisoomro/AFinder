@@ -62,7 +62,7 @@ public class FilesAdapter extends ArrayAdapter<FileWrapper> {
         FileWrapper wrapper = getItem(position);
 
         holder.mFileName.setText(wrapper.getFile().getName());
-        wrapper.getType().loadIcon(getContext(), wrapper).fitCenter().crossFade().into(holder.mFileIcon);
+        wrapper.loadIcon(getContext()).fitCenter().crossFade().into(holder.mFileIcon);
     }
 
     static class ViewHolder {

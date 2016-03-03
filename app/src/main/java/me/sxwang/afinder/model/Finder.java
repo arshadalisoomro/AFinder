@@ -85,6 +85,14 @@ public class Finder extends AbsFinder {
         for (FileWrapper wrapper : files) {
             result = result && wrapper.getFile().delete();
         }
+        updateFileList();
+        return result;
+    }
+
+    public boolean renameFileTo(FileWrapper wrapper, String newName) {
+        File file = wrapper.getFile();
+        boolean result = file.renameTo(new File(file.getParent(), newName));
+        updateFileList();
         return result;
     }
 

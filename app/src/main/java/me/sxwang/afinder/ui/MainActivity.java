@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         initToolbar();
         initView();
         initFinder();
+
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -229,6 +230,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(position);
         if (wrapper.getFile().isDirectory()) {
             cd(wrapper.getFile().getAbsolutePath());
+        } else {
+            startActivity(wrapper.getIntent());
         }
     }
 
@@ -272,15 +275,27 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
         int id = item.getItemId();
+        SparseBooleanArray positions = mListView.getCheckedItemPositions();
         switch (id) {
             case R.id.action_copy:
-                Log.d("copy", "position: " + mListView.getCheckedItemPositions().keyAt(0));
+                Log.d("copy", "position: " + positions.keyAt(0));
                 return true;
             case R.id.action_rename:
-                Log.d("rename", "position: " + mListView.getCheckedItemPositions().keyAt(0));
+                Log.d("rename", "position: " + positions.keyAt(0));
+                if (positions.valueAt(0)) {
+                    int p = positions.keyAt(0);
+                    final FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(p);
+                    EditTextDialogFragment dialogFragment = EditTextDialogFragment.newInstance("Rename", "New name");
+                    dialogFragment.setOnFinishListener(new EditTextDialogFragment.OnFinishListener() {
+                        @Override
+                        public void onFinish(CharSequence text) {
+                            mFinder.renameFileTo(wrapper, text.toString());
+                        }
+                    });
+                    dialogFragment.show(getSupportFragmentManager(),null);
+                }
                 return true;
             case R.id.action_delete:
-                SparseBooleanArray positions = mListView.getCheckedItemPositions();
                 Log.d("delete", "positions: " + positions);
                 List<FileWrapper> files = new ArrayList<>();
                 for (int i = 0, size = positions.size(); i < size; i++) {
@@ -291,6 +306,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     }
                 }
                 mFinder.deleteFiles(files);
+                mode.finish();
                 return true;
         }
         return false;

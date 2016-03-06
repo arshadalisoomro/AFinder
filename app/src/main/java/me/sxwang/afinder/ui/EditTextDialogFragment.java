@@ -18,8 +18,9 @@ public class EditTextDialogFragment extends DialogFragment implements DialogInte
     private EditText mEditText;
     private OnFinishListener mOnFinishListener;
 
-    public static EditTextDialogFragment newInstance(CharSequence title, CharSequence hint) {
+    public static EditTextDialogFragment newInstance(CharSequence title, CharSequence hint, OnFinishListener mOnFinishListener) {
         EditTextDialogFragment fragment = new EditTextDialogFragment();
+        fragment.setOnFinishListener(mOnFinishListener);
 
         Bundle bundle = new Bundle();
         bundle.putCharSequence("title", title);

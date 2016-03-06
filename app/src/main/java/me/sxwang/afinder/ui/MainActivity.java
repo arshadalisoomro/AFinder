@@ -5,6 +5,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -17,9 +18,10 @@ import android.view.Window;
 import android.view.animation.OvershootInterpolator;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,8 +30,9 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import me.sxwang.afinder.BusProvider;
 import me.sxwang.afinder.R;
-import me.sxwang.afinder.model.AbsFinder;
+import me.sxwang.afinder.event.FileListChangedEvent;
 import me.sxwang.afinder.model.FileWrapper;
 import me.sxwang.afinder.model.Finder;
 import me.sxwang.afinder.ui.adapter.FilesAdapter;
@@ -52,6 +55,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     Finder mFinder;
 
+    FilesAdapter mAdapter;
+
     private int typeToCreate = CREATE_FILE;
     public static final int CREATE_FILE = 0;
     public static final int CREATE_FOLDER = 1;
@@ -65,8 +70,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         initToolbar();
         initView();
-        initFinder();
 
+        BusProvider.getUIBus().register(this);
+        initFinder();
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -77,12 +83,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void initFinder() {
         mFinder = new Finder();
-        mFinder.setFileListObserver(new AbsFinder.FileListObserver() {
-            @Override
-            public void onFileListUpdated(List<FileWrapper> fileList) {
-                refreshView();
-            }
-        });
         cd(null);
     }
 
@@ -104,15 +104,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 cd(path);
             }
         });
-        //noinspection deprecation
-        mPathView.setBackgroundColor(getResources().getColor(R.color.grey50));
+        mPathView.setBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.grey50, getTheme()));
         AbsListView.LayoutParams lp = new AbsListView.LayoutParams(AbsListView.LayoutParams.MATCH_PARENT,
                 AbsListView.LayoutParams.WRAP_CONTENT);
         mPathView.setLayoutParams(lp);
         mListView.addHeaderView(mPathView);
 
-        ListAdapter filesAdapter = new FilesAdapter(this);
-        mListView.setAdapter(filesAdapter);
+        mAdapter = new FilesAdapter(this);
+        mListView.setAdapter(mAdapter);
         mListView.setOnItemClickListener(this);
         mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
         mListView.setMultiChoiceModeListener(this);
@@ -129,16 +128,23 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
+    @Subscribe
+    public void onFileListChanged(FileListChangedEvent fileListChangedEvent) {
+        if (mFinder != null && mFinder.hashCode() == fileListChangedEvent.mFinderId) {
+            refreshView();
+        }
+    }
+
     private void refreshView() {
         mPathView.setPath(mFinder.getCurrentPath());
-        ListAdapter filesAdapter = new FilesAdapter(this, mFinder.getFileList());
-        mListView.setAdapter(filesAdapter);
+        mAdapter.clear();
+        mAdapter.addAll(mFinder.getFileList());
+        mAdapter.notifyDataSetChanged();
     }
 
     @OnClick(R.id.fab)
     public void onFabClick(View view) {
         toggleSubFab();
-
     }
 
     private void toggleSubFab() {
@@ -174,9 +180,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 title = "Create a folder";
                 typeToCreate = CREATE_FOLDER;
         }
-        EditTextDialogFragment dialogFragment = EditTextDialogFragment.newInstance(title, "Name");
-        dialogFragment.show(getSupportFragmentManager(), null);
-        dialogFragment.setOnFinishListener(new EditTextDialogFragment.OnFinishListener() {
+        EditTextDialogFragment.newInstance(title, "Name", new EditTextDialogFragment.OnFinishListener() {
             @Override
             public void onFinish(CharSequence text) {
                 try {
@@ -191,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
-        });
+        }).show(getSupportFragmentManager(), null);
     }
 
     @Override
@@ -279,21 +283,21 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         switch (id) {
             case R.id.action_copy:
                 Log.d("copy", "position: " + positions.keyAt(0));
+                mode.finish();
                 return true;
             case R.id.action_rename:
                 Log.d("rename", "position: " + positions.keyAt(0));
                 if (positions.valueAt(0)) {
                     int p = positions.keyAt(0);
                     final FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(p);
-                    EditTextDialogFragment dialogFragment = EditTextDialogFragment.newInstance("Rename", "New name");
-                    dialogFragment.setOnFinishListener(new EditTextDialogFragment.OnFinishListener() {
+                    EditTextDialogFragment.newInstance("Rename", "New name", new EditTextDialogFragment.OnFinishListener() {
                         @Override
                         public void onFinish(CharSequence text) {
                             mFinder.renameFileTo(wrapper, text.toString());
                         }
-                    });
-                    dialogFragment.show(getSupportFragmentManager(),null);
+                    }).show(getSupportFragmentManager(), null);
                 }
+                mode.finish();
                 return true;
             case R.id.action_delete:
                 Log.d("delete", "positions: " + positions);
@@ -314,5 +318,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onDestroyActionMode(ActionMode mode) {
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BusProvider.getUIBus().unregister(this);
     }
 }

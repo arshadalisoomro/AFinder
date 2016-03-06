@@ -37,3 +37,11 @@
   public *;
 }
 # GLIDE END
+
+# OTTO START
+-keepattributes *Annotation*
+-keepclassmembers class ** {
+    @com.squareup.otto.Subscribe public *;
+    @com.squareup.otto.Produce public *;
+}
+# OTTO END

@@ -3,6 +3,7 @@ package me.sxwang.afinder.model;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.webkit.MimeTypeMap;
 
 import com.bumptech.glide.DrawableTypeRequest;
 import com.bumptech.glide.Glide;
@@ -38,7 +39,13 @@ public class FileWrapper {
     public Intent getIntent() {
         if (mFile.isFile()) {
             Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(Uri.fromFile(mFile), "");
+
+            String name = mFile.getName();
+            String extName = name.substring(name.lastIndexOf(".") + 1);
+            String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extName);
+
+            intent.setDataAndType(Uri.fromFile(mFile), type);
+            return intent;
         }
         return null;
     }

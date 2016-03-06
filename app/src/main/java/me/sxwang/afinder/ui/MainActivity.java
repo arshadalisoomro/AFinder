@@ -75,6 +75,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         initFinder();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BusProvider.getUIBus().unregister(this);
+    }
+
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void enableTransition() {
         getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
@@ -280,6 +286,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
         int id = item.getItemId();
         SparseBooleanArray positions = mListView.getCheckedItemPositions();
+
+        List<FileWrapper> files = new ArrayList<>();
+        for (int i = 0, size = positions.size(); i < size; i++) {
+            if (positions.valueAt(i)) {
+                int p = positions.keyAt(i);
+                FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(p);
+                files.add(wrapper);
+            }
+        }
+
         switch (id) {
             case R.id.action_copy:
                 Log.d("copy", "position: " + positions.keyAt(0));
@@ -287,28 +303,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 return true;
             case R.id.action_rename:
                 Log.d("rename", "position: " + positions.keyAt(0));
-                if (positions.valueAt(0)) {
-                    int p = positions.keyAt(0);
-                    final FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(p);
-                    EditTextDialogFragment.newInstance("Rename", "New name", new EditTextDialogFragment.OnFinishListener() {
-                        @Override
-                        public void onFinish(CharSequence text) {
-                            mFinder.renameFileTo(wrapper, text.toString());
-                        }
-                    }).show(getSupportFragmentManager(), null);
-                }
+                final FileWrapper wrapper = files.get(0);
+                EditTextDialogFragment.newInstance("Rename", "New name", new EditTextDialogFragment.OnFinishListener() {
+                    @Override
+                    public void onFinish(CharSequence text) {
+                        mFinder.renameFileTo(wrapper, text.toString());
+                    }
+                }).show(getSupportFragmentManager(), null);
                 mode.finish();
                 return true;
             case R.id.action_delete:
                 Log.d("delete", "positions: " + positions);
-                List<FileWrapper> files = new ArrayList<>();
-                for (int i = 0, size = positions.size(); i < size; i++) {
-                    if (positions.valueAt(i)) {
-                        int p = positions.keyAt(i);
-                        FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(p);
-                        files.add(wrapper);
-                    }
-                }
                 mFinder.deleteFiles(files);
                 mode.finish();
                 return true;
@@ -320,9 +325,4 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onDestroyActionMode(ActionMode mode) {
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        BusProvider.getUIBus().unregister(this);
-    }
 }

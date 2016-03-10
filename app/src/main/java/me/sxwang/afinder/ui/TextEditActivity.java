@@ -3,6 +3,8 @@ package me.sxwang.afinder.ui;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.EditText;
 
 import butterknife.Bind;
@@ -22,6 +24,17 @@ public class TextEditActivity extends AppCompatActivity {
         setContentView(R.layout.activity_text_edit);
         ButterKnife.bind(this);
         setSupportActionBar(mToolbar);
+
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_text_edit, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return super.onOptionsItemSelected(item);
+    }
 }

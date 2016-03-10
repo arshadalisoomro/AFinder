@@ -83,10 +83,20 @@ public class Finder extends AbsFinder {
     public boolean deleteFiles(List<FileWrapper> files) {
         boolean result = true;
         for (FileWrapper wrapper : files) {
-            result = result && wrapper.getFile().delete();
+            result = result && rm(wrapper.getFile());
         }
         updateFileList();
         return result;
+    }
+
+    private boolean rm(File file) {
+        if (file.canRead() && file.isDirectory()) {
+            File[] children = file.listFiles();
+            for (File c : children) {
+                rm(c);
+            }
+        }
+        return file.delete();
     }
 
     public boolean renameFileTo(FileWrapper wrapper, String newName) {

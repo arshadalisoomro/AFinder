@@ -1,6 +1,7 @@
 package me.sxwang.afinder.ui;
 
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -137,15 +138,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @Subscribe
     public void onFileListChanged(FileListChangedEvent fileListChangedEvent) {
         if (mFinder != null && mFinder.hashCode() == fileListChangedEvent.mFinderId) {
-            refreshView();
+            refreshView(false);
         }
     }
 
-    private void refreshView() {
+    /**
+     * Refresh view
+     * @param forceUpdate if set to true, will recreate the adapter
+     */
+    private void refreshView(boolean forceUpdate) {
         mPathView.setPath(mFinder.getCurrentPath());
-        mAdapter.clear();
-        mAdapter.addAll(mFinder.getFileList());
-        mAdapter.notifyDataSetChanged();
+        if (forceUpdate) {
+            mAdapter = new FilesAdapter(this, mFinder.getFileList());
+            mListView.setAdapter(mAdapter);
+        } else {
+            mAdapter.clear();
+            mAdapter.addAll(mFinder.getFileList());
+            mAdapter.notifyDataSetChanged();
+        }
     }
 
     @OnClick(R.id.fab)
@@ -240,8 +250,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(position);
         if (wrapper.getFile().isDirectory()) {
             cd(wrapper.getFile().getAbsolutePath());
-        } else {
-            startActivity(wrapper.getIntent());
+        } else if (wrapper.getFile().canRead()) {
+            Intent intent = wrapper.getIntent();
+            if (getPackageManager().queryIntentActivities(intent, 0).size() > 0) {
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, R.string.error_no_installed_app, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

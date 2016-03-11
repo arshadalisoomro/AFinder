@@ -10,12 +10,22 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.transition.Explode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
+import android.widget.ListView;
 
+import com.squareup.otto.Subscribe;
+
+import java.io.File;
+
+import me.sxwang.afinder.BusProvider;
 import me.sxwang.afinder.R;
+import me.sxwang.afinder.event.FileListChangedEvent;
+import me.sxwang.afinder.model.SearchFinder;
+import me.sxwang.afinder.ui.adapter.FilesAdapter;
 
 public class SearchActivity extends AppCompatActivity {
 
@@ -31,8 +41,9 @@ public class SearchActivity extends AppCompatActivity {
         }
     }
 
-    private String mPath;
+    private SearchFinder mFinder;
 
+    ListView mListView;
     SearchView mSearchView;
 
     @Override
@@ -45,7 +56,26 @@ public class SearchActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        mPath = getIntent().getStringExtra(EXTRA_PATH);
+        String path = getIntent().getStringExtra(EXTRA_PATH);
+        mFinder = new SearchFinder();
+        mFinder.setCurrentPath(new File(path));
+
+        mListView = (ListView) findViewById(R.id.list);
+
+        BusProvider.getUIBus().register(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BusProvider.getUIBus().unregister(this);
+    }
+
+    @Subscribe
+    public void onFileListChanged(FileListChangedEvent fileListChangedEvent) {
+        if (mFinder != null && mFinder.hashCode() == fileListChangedEvent.mFinderId) {
+            mListView.setAdapter(new FilesAdapter(this, fileListChangedEvent.mFileList));
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -63,6 +93,10 @@ public class SearchActivity extends AppCompatActivity {
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
+                if (!TextUtils.isEmpty(query)) {
+                    mFinder.query(query);
+                    return true;
+                }
                 return false;
             }
 
@@ -71,6 +105,7 @@ public class SearchActivity extends AppCompatActivity {
                 return false;
             }
         });
+
 
         searchMenuItem.expandActionView();
         MenuItemCompat.setOnActionExpandListener(searchMenuItem, new MenuItemCompat.OnActionExpandListener() {
@@ -87,4 +122,6 @@ public class SearchActivity extends AppCompatActivity {
         });
         return true;
     }
+
+
 }

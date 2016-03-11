@@ -11,22 +11,16 @@ import java.util.List;
  * Created by wang on 2/24/16.
  */
 public class Finder extends AbsFinder {
-    private FileWrapper mCurrentPath;
-    private List<FileWrapper> mFileList;
-
-    public Finder() {
-    }
-
-    public FileWrapper getCurrentPathWrapper() {
-        return mCurrentPath;
-    }
+    private File mCurrentPath;
+    private List<File> mFileList;
+    private String mCopiedPath;
 
     public String getCurrentPath() {
-        return mCurrentPath.getFile().getAbsolutePath();
+        return mCurrentPath.getAbsolutePath();
     }
 
     public boolean goUp() throws IOException {
-        String parent = mCurrentPath.getFile().getParent();
+        String parent = mCurrentPath.getParent();
         if (parent != null) {
             cd(parent);
             return true;
@@ -39,16 +33,17 @@ public class Finder extends AbsFinder {
         if (!file.canRead()) {
             throw new IOException("Permission denied");
         }
-        mCurrentPath = FileWrapper.wrap(file);
+        mCurrentPath = file;
         updateFileList();
     }
 
-    public List<FileWrapper> getFileList() {
+    @Override
+    public List<File> getFileList() {
         return mFileList;
     }
 
     public void updateFileList() {
-        File[] files = mCurrentPath.getFile().listFiles();
+        File[] files = mCurrentPath.listFiles();
         if (files == null) {
             mFileList = Collections.emptyList();
             return;
@@ -56,7 +51,7 @@ public class Finder extends AbsFinder {
 
         mFileList = new ArrayList<>();
         for (File file : files) {
-            mFileList.add(FileWrapper.wrap(file));
+            mFileList.add(file);
         }
 
         sortFileList();
@@ -66,13 +61,13 @@ public class Finder extends AbsFinder {
         sortFileList(new DefaultFileComparator());
     }
 
-    public void sortFileList(Comparator<FileWrapper> comparator) {
+    public void sortFileList(Comparator<File> comparator) {
         Collections.sort(mFileList, comparator);
-        notifyFileListUpdated(mFileList);
+        notifyFileListUpdated();
     }
 
     public boolean createFile(String name, boolean isDirectory) throws IOException {
-        File file = new File(mCurrentPath.getFile(), name);
+        File file = new File(mCurrentPath, name);
         boolean success = isDirectory ? file.mkdir() : file.createNewFile();
         if (success) {
             updateFileList();
@@ -80,13 +75,25 @@ public class Finder extends AbsFinder {
         return success;
     }
 
-    public boolean deleteFiles(List<FileWrapper> files) {
+    public boolean deleteFiles(List<File> files) {
         boolean result = true;
-        for (FileWrapper wrapper : files) {
-            result = result && rm(wrapper.getFile());
+        for (File file : files) {
+            result = result && rm(file);
         }
         updateFileList();
         return result;
+    }
+
+    public void copyPathOnly(String path) {
+        mCopiedPath = path;
+    }
+
+    public void paste() {
+        paste(mCurrentPath);
+    }
+
+    public void paste(File directory) {
+        
     }
 
     private boolean rm(File file) {
@@ -99,22 +106,21 @@ public class Finder extends AbsFinder {
         return file.delete();
     }
 
-    public boolean renameFileTo(FileWrapper wrapper, String newName) {
-        File file = wrapper.getFile();
+    public boolean renameFileTo(File file, String newName) {
         boolean result = file.renameTo(new File(file.getParent(), newName));
         updateFileList();
         return result;
     }
 
-    public static class DefaultFileComparator implements Comparator<FileWrapper> {
+    public static class DefaultFileComparator implements Comparator<File> {
         @Override
-        public int compare(FileWrapper lhs, FileWrapper rhs) {
-            int l = lhs.getFile().isDirectory() ? 0 : 1;
-            int r = rhs.getFile().isDirectory() ? 0 : 1;
+        public int compare(File lhs, File rhs) {
+            int l = lhs.isDirectory() ? 0 : 1;
+            int r = rhs.isDirectory() ? 0 : 1;
             if (l - r != 0) {
                 return l - r;
             }
-            return lhs.getFile().compareTo(rhs.getFile());
+            return lhs.compareTo(rhs);
         }
     }
 }

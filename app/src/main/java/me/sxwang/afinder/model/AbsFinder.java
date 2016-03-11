@@ -1,5 +1,6 @@
 package me.sxwang.afinder.model;
 
+import java.io.File;
 import java.util.List;
 
 import me.sxwang.afinder.BusProvider;
@@ -10,9 +11,9 @@ import me.sxwang.afinder.event.FileListChangedEvent;
  */
 public abstract class AbsFinder {
 
-    public abstract void updateFileList();
+    public abstract List<File> getFileList();
 
-    protected void notifyFileListUpdated(List<FileWrapper> fileList) {
-        BusProvider.getUIBus().post(new FileListChangedEvent(fileList, this.hashCode()));
+    protected void notifyFileListUpdated() {
+        BusProvider.getUIBus().post(new FileListChangedEvent(getFileList(), this.hashCode()));
     }
 }

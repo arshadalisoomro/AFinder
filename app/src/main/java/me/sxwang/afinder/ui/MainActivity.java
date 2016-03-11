@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.squareup.otto.Subscribe;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,8 +34,8 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.sxwang.afinder.BusProvider;
 import me.sxwang.afinder.R;
+import me.sxwang.afinder.Utils;
 import me.sxwang.afinder.event.FileListChangedEvent;
-import me.sxwang.afinder.model.FileWrapper;
 import me.sxwang.afinder.model.Finder;
 import me.sxwang.afinder.ui.adapter.FilesAdapter;
 import me.sxwang.afinder.ui.widget.SegmentedPathView;
@@ -144,6 +145,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     /**
      * Refresh view
+     *
      * @param forceUpdate if set to true, will recreate the adapter
      */
     private void refreshView(boolean forceUpdate) {
@@ -247,11 +249,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(position);
-        if (wrapper.getFile().isDirectory()) {
-            cd(wrapper.getFile().getAbsolutePath());
-        } else if (wrapper.getFile().canRead()) {
-            Intent intent = wrapper.getIntent();
+        File file = (File) mListView.getAdapter().getItem(position);
+        if (file.isDirectory()) {
+            cd(file.getAbsolutePath());
+        } else if (file.canRead()) {
+            Intent intent = Utils.createIntent(file);
             if (getPackageManager().queryIntentActivities(intent, 0).size() > 0) {
                 startActivity(intent);
             } else {
@@ -302,12 +304,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         int id = item.getItemId();
         SparseBooleanArray positions = mListView.getCheckedItemPositions();
 
-        List<FileWrapper> files = new ArrayList<>();
+        List<File> files = new ArrayList<>();
         for (int i = 0, size = positions.size(); i < size; i++) {
             if (positions.valueAt(i)) {
                 int p = positions.keyAt(i);
-                FileWrapper wrapper = (FileWrapper) mListView.getAdapter().getItem(p);
-                files.add(wrapper);
+                File file = (File) mListView.getAdapter().getItem(p);
+                files.add(file);
             }
         }
 
@@ -318,18 +320,28 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 return true;
             case R.id.action_rename:
                 Log.d("rename", "position: " + positions.keyAt(0));
-                final FileWrapper wrapper = files.get(0);
+                final File file = files.get(0);
                 EditTextDialogFragment.newInstance("Rename", "New name", new EditTextDialogFragment.OnFinishListener() {
                     @Override
                     public void onFinish(CharSequence text) {
-                        mFinder.renameFileTo(wrapper, text.toString());
+                        boolean success = mFinder.renameFileTo(file, text.toString());
+                        if (success) {
+                            Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, "Failed", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }).show(getSupportFragmentManager(), null);
                 mode.finish();
                 return true;
             case R.id.action_delete:
                 Log.d("delete", "positions: " + positions);
-                mFinder.deleteFiles(files);
+                boolean success = mFinder.deleteFiles(files);
+                if (success) {
+                    Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Failed", Toast.LENGTH_SHORT).show();
+                }
                 mode.finish();
                 return true;
         }

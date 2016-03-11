@@ -7,7 +7,7 @@
     <string name="action_rename">Rename</string>
     <string name="action_paste">Paste</string>
     <string name="title_activity_search">Search</string>
-    <string name="title_activity_text_edit">Edit</string>
+    <string name="title_activity_text_edit">Text</string>
     <string name="action_save">Save</string>
     <string name="error_no_installed_app">You haven\'t any app to open this file</string>
 </resources>

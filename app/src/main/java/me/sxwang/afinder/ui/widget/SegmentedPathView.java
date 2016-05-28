@@ -3,6 +3,7 @@ package me.sxwang.afinder.ui.widget;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.v7.view.ContextThemeWrapper;
+import android.support.v7.widget.AppCompatButton;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,7 +70,7 @@ public class SegmentedPathView extends HorizontalScrollView implements View.OnCl
         }
         StringBuilder pathBuilder = new StringBuilder();
         for (String s : segments) {
-            Button button = new Button(new ContextThemeWrapper(getContext(),
+            Button button = new AppCompatButton(new ContextThemeWrapper(getContext(),
                     R.style.AppTheme_Widget_Button_Borderless_Colored_Small), null, 0);
             button.setAllCaps(false);
             button.setText(s + File.separator);

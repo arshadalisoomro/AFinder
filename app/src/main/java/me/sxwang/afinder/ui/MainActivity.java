@@ -85,8 +85,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void enableTransition() {
-        getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
 //        getWindow().setExitTransition(new Explode());
+        }
     }
 
     private void initFinder() {
@@ -139,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @Subscribe
     public void onFileListChanged(FileListChangedEvent fileListChangedEvent) {
         if (mFinder != null && mFinder.hashCode() == fileListChangedEvent.mFinderId) {
-            refreshView(false);
+            refreshView(true);
         }
     }
 
@@ -156,7 +158,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         } else {
             mAdapter.clear();
             mAdapter.addAll(mFinder.getFileList());
-            mAdapter.notifyDataSetChanged();
         }
     }
 

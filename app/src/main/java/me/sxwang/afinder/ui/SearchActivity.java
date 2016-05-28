@@ -6,14 +6,10 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.transition.Explode;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.Window;
 import android.widget.ListView;
 
@@ -52,15 +48,28 @@ public class SearchActivity extends AppCompatActivity {
         enableTransition();
         setContentView(R.layout.activity_search);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
         String path = getIntent().getStringExtra(EXTRA_PATH);
         mFinder = new SearchFinder();
+
         mFinder.setCurrentPath(new File(path));
 
         mListView = (ListView) findViewById(R.id.list);
+        mSearchView = (SearchView) findViewById(R.id.searchView);
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                if (!TextUtils.isEmpty(query)) {
+                    mFinder.query(query);
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
 
         BusProvider.getUIBus().register(this);
     }
@@ -80,48 +89,10 @@ public class SearchActivity extends AppCompatActivity {
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void enableTransition() {
-        getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
-        getWindow().setEnterTransition(new Explode());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
+            getWindow().setEnterTransition(new Explode());
+        }
     }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_search, menu);
-        MenuItem searchMenuItem = menu.findItem(R.id.action_search);
-        mSearchView = (SearchView) searchMenuItem.getActionView();
-
-        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                if (!TextUtils.isEmpty(query)) {
-                    mFinder.query(query);
-                    return true;
-                }
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return false;
-            }
-        });
-
-
-        searchMenuItem.expandActionView();
-        MenuItemCompat.setOnActionExpandListener(searchMenuItem, new MenuItemCompat.OnActionExpandListener() {
-            @Override
-            public boolean onMenuItemActionExpand(MenuItem item) {
-                return true;
-            }
-
-            @Override
-            public boolean onMenuItemActionCollapse(MenuItem item) {
-                supportFinishAfterTransition();
-                return false;
-            }
-        });
-        return true;
-    }
-
 
 }

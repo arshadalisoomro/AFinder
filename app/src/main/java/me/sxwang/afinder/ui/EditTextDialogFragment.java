@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.AppCompatEditText;
 import android.widget.EditText;
 
 /**
@@ -40,7 +41,7 @@ public class EditTextDialogFragment extends DialogFragment implements DialogInte
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        mEditText = new EditText(getActivity());
+        mEditText = new AppCompatEditText(getActivity());
         mEditText.setHint(mHint);
         float density = getResources().getDisplayMetrics().density;
         int space = (int) (density * 24);
